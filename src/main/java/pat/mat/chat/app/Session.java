@@ -2,6 +2,9 @@ package pat.mat.chat.app;
 
 import jakarta.persistence.*;
 
+import java.util.Date;
+import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 
 @Entity
@@ -11,15 +14,28 @@ public class Session {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+
+    @Column(name = "date_created")
+    @Temporal(TemporalType.DATE)
+    private Date dateCreated;
+
+
     @ManyToMany
     @JoinTable(
-            name = "session_user",
+            name = "sessionuser",
             joinColumns = @JoinColumn(name = "session_id"),
-            inverseJoinColumns = @JoinColumn(name = "user_id")
+            inverseJoinColumns = @JoinColumn(name = "user_name")
     )
-    private Set<User> users;
+    private Set<User> users = new HashSet<>();
 
-    // Getters and setters
+    public Session() {
+        dateCreated = new Date();
+    }
+
+    public Session(User sessionCreator) {
+        this();
+        users.add(sessionCreator);
+    }
 
     public Long getId() {
         return id;
@@ -36,4 +52,37 @@ public class Session {
     public void setUsers(Set<User> users) {
         this.users = users;
     }
+
+    public Date getDateCreated() {
+        return dateCreated;
+    }
+
+    public void setDateCreated(Date dateCreated) {
+        this.dateCreated = dateCreated;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        Session session = (Session) o;
+
+        return Objects.equals(id, session.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return id != null ? id.hashCode() : 0;
+    }
+
+    @Override
+    public String toString() {
+        return "Session{" +
+                "id=" + id +
+                ", dateCreated=" + dateCreated +
+                ", users=" + users +
+                '}';
+    }
+
 }

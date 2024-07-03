@@ -3,6 +3,8 @@ package pat.mat.chat.app;
 
 import jakarta.persistence.*;
 
+import java.util.Date;
+
 @Entity
 @Table(name = "messages")
 public class Message {
@@ -12,6 +14,71 @@ public class Message {
     @Column
     private Long Id;
 
+    @ManyToOne
+    @JoinColumn(name = "user_name")
+    private User user;
 
-    private String userName;
+    @ManyToOne
+    @JoinColumn(name = "session_id")
+    private Session session;
+
+
+    @Temporal(TemporalType.TIMESTAMP)
+    @Column(name = "timestamp")
+    private Date timeStamp;
+
+
+    @Column(name = "content", nullable = false, columnDefinition = "TEXT")
+    private String content;
+
+    public Message() {
+        timeStamp = new Date();
+    }
+
+    public Message(User sender, Session session, String content) {
+        this();
+        user = sender;
+        this.session = session;
+        this.content = content;
+    }
+
+    public Long getId() {
+        return Id;
+    }
+
+    public void setId(Long id) {
+        Id = id;
+    }
+
+    public User getUser() {
+        return user;
+    }
+
+    public void setUser(User user) {
+        this.user = user;
+    }
+
+    public Session getSession() {
+        return session;
+    }
+
+    public void setSession(Session session) {
+        this.session = session;
+    }
+
+    public Date getTimeStamp() {
+        return timeStamp;
+    }
+
+    public void setTimeStamp(Date timeStamp) {
+        this.timeStamp = timeStamp;
+    }
+
+    public String getContent() {
+        return content;
+    }
+
+    public void setContent(String content) {
+        this.content = content;
+    }
 }
