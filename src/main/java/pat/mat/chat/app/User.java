@@ -2,7 +2,8 @@ package pat.mat.chat.app;
 
 
 import jakarta.persistence.*;
-import org.springframework.data.repository.Repository;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 
 import java.util.Objects;
 import java.util.Set;
@@ -12,12 +13,16 @@ import java.util.Set;
 public class User {
 
     @Id
-    @Column(nullable = false, unique = true, length = 20)
+    @Column(name="username", nullable = false, unique = true)
+    @NotBlank
+    @Size(min=3, max=16)
     private String username;
 
 
-    @Column(nullable = false)
-    private String passwordHash;
+    @Column(name="password", nullable = false)
+    @NotBlank
+    @Size(min=5)
+    private String password;
 
     @ManyToMany(mappedBy = "users")
     private Set<Session> sessions;
@@ -26,9 +31,9 @@ public class User {
 
     }
 
-    public User(String name, String passwordHash) {
+    public User(String name, String password) {
         username = name;
-        this.passwordHash = passwordHash;
+        this.password = password;
 
     }
 
@@ -36,16 +41,16 @@ public class User {
         return username;
     }
 
-    public String getPasswordHash() {
-        return passwordHash;
+    public String getPassword() {
+        return password;
     }
 
     public void setUsername(String username) {
         this.username = username;
     }
 
-    public void setPasswordHash(String passwordHash) {
-        this.passwordHash = passwordHash;
+    public void setPassword(String password) {
+        this.password = password;
     }
 
     @Override
@@ -67,7 +72,7 @@ public class User {
     public String toString() {
         return "User{" +
                 "username='" + username + '\'' +
-                ", passwordHash='" + passwordHash + '\'' +
+                ", passwordHash='" + password + '\'' +
                 '}';
     }
 }

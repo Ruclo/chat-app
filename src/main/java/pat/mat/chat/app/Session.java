@@ -22,7 +22,7 @@ public class Session {
 
     @ManyToMany
     @JoinTable(
-            name = "sessionuser",
+            name = "sessionusers",
             joinColumns = @JoinColumn(name = "session_id"),
             inverseJoinColumns = @JoinColumn(name = "user_name")
     )
