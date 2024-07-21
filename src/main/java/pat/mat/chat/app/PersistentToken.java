@@ -1,7 +1,6 @@
 package pat.mat.chat.app;
 
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
 @Entity
@@ -14,7 +13,7 @@ public class PersistentToken {
     private String successionID;
 
     @Column(nullable = false, length = 4096)
-    private String token;
+    private String tokenHash;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "username", nullable = false)
@@ -24,9 +23,9 @@ public class PersistentToken {
 
     }
 
-    public PersistentToken(String successionID, String token, User user) {
+    public PersistentToken(String successionID, String tokenHash, User user) {
         this.successionID = successionID;
-        this.token = token;
+        this.tokenHash = tokenHash;
         this.user = user;
     }
 
@@ -38,12 +37,12 @@ public class PersistentToken {
         this.successionID = successionID;
     }
 
-    public String getToken() {
-        return token;
+    public String getTokenHash() {
+        return tokenHash;
     }
 
-    public void setToken(String token) {
-        this.token = token;
+    public void setTokenHash(String tokenHash) {
+        this.tokenHash = tokenHash;
     }
 
     public User getUser() {

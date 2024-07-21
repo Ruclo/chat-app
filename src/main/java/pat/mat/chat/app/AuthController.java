@@ -10,13 +10,9 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.oauth2.jwt.Jwt;
-import org.springframework.security.oauth2.jwt.JwtClaimsSet;
-import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.util.Map;
 
 
 @RestController
@@ -28,8 +24,6 @@ public class AuthController {
     @Autowired
     AuthService authService;
 
-    @Autowired
-    JwtDecoder jwtDecoder;
 
     @GetMapping("/test")
     public String test() {
@@ -37,12 +31,16 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    public AuthResponse register(@ModelAttribute @Valid User user, HttpServletResponse httpServletResponse) {
+    public AuthResponse register(@ModelAttribute @Valid UserDTO userDto, HttpServletResponse httpServletResponse) {
+
 
         TokenPair tokenPair;
-        try {tokenPair = authService.registerUser(user);}
+        try {tokenPair = authService.registerUser(userDto);}
+        catch (UserAlreadyExistsException uaee) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT);
+        }
         catch (Exception e) {
-            System.out.println(e);
+            System.out.println(e.getMessage());
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
@@ -57,10 +55,11 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public AuthResponse login(@ModelAttribute @Valid User user, HttpServletResponse httpServletResponse) {
+    public AuthResponse login(@ModelAttribute @Valid UserDTO userDto, HttpServletResponse httpServletResponse) {
 
         Authentication authentication;
-        try {authentication = authManager.authenticate(new UsernamePasswordAuthenticationToken(user.getUsername(), user.getPassword()));}
+        
+        try {authentication = authManager.authenticate(new UsernamePasswordAuthenticationToken(userDto.getUsername(), userDto.getPassword()));}
         catch (BadCredentialsException e) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
         }
@@ -69,7 +68,7 @@ public class AuthController {
 
 
         TokenPair tokenPair;
-        try {tokenPair = authService.loginUser(user);}
+        try {tokenPair = authService.loginUser(userDto);}
         catch (Exception e) {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR);
         }
@@ -83,10 +82,10 @@ public class AuthController {
 
         return new AuthResponse(tokenPair.accessToken());    }
 
-    @PostMapping("/refresh")
+    @GetMapping("/refresh")
     public AuthResponse refresh(@CookieValue("refreshToken") String refreshToken, HttpServletResponse httpServletResponse) {
         TokenPair tokenPair;
-
+        System.out.println(refreshToken);
         try {tokenPair = authService.refreshTokens(refreshToken);}
         catch (PotentialCookieTheftException pcte) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Cookie theft detected");
@@ -101,5 +100,21 @@ public class AuthController {
         return new AuthResponse(tokenPair.accessToken());
     }
 
+    @PostMapping("/logout")
+    public void logout(@CookieValue("refreshToken") String refreshToken, HttpServletResponse httpServletResponse) {
+
+        try {authService.logOut(refreshToken);}
+        catch (Exception e) {
+            System.out.println(e.getMessage());
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+        }
+
+        Cookie persistentTokenCookie = new Cookie("refreshToken", null);
+        persistentTokenCookie.setHttpOnly(true);
+        persistentTokenCookie.setSecure(true);
+        persistentTokenCookie.setMaxAge(0);
+        httpServletResponse.addCookie(persistentTokenCookie);
+
+    }
 
 }

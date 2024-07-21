@@ -2,6 +2,7 @@ package pat.mat.chat.app;
 
 import jakarta.persistence.*;
 
+import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Objects;
@@ -16,8 +17,7 @@ public class Session {
 
 
     @Column(name = "date_created")
-    @Temporal(TemporalType.DATE)
-    private Date dateCreated;
+    private LocalDateTime dateCreated;
 
 
     @ManyToMany
@@ -29,7 +29,7 @@ public class Session {
     private Set<User> users = new HashSet<>();
 
     public Session() {
-        dateCreated = new Date();
+        dateCreated = LocalDateTime.now();
     }
 
     public Session(User sessionCreator) {
@@ -53,13 +53,15 @@ public class Session {
         this.users = users;
     }
 
-    public Date getDateCreated() {
+    public LocalDateTime getDateCreated() {
         return dateCreated;
     }
 
-    public void setDateCreated(Date dateCreated) {
+    public void setDateCreated(LocalDateTime dateCreated) {
         this.dateCreated = dateCreated;
     }
+
+    public void addUser(User user) { users.add(user); }
 
     @Override
     public boolean equals(Object o) {

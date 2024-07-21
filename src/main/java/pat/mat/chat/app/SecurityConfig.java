@@ -14,6 +14,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,6 +34,7 @@ import java.util.Arrays;
 
 @Configuration
 @EnableWebSecurity
+@EnableMethodSecurity(prePostEnabled = true)
 public class SecurityConfig {
 
     @Autowired
@@ -48,7 +50,7 @@ public class SecurityConfig {
         daoAuthProvider.setUserDetailsService(userDetailsService);
         daoAuthProvider.setPasswordEncoder(passwordEncoder());
         return new ProviderManager(Arrays.asList(
-                new JwtAuthenticationProvider(jwtDecoder()),
+                new CustomJwtAuthenticationProvider(jwtDecoder()),
                 daoAuthProvider
         ));
     }
@@ -64,12 +66,14 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth ->
                     auth.requestMatchers(HttpMethod.POST, "/register").permitAll()
                             .requestMatchers(HttpMethod.POST, "/login").permitAll()
+                            .requestMatchers("/refresh").permitAll()
                             .requestMatchers("/error").permitAll()
                             .anyRequest().authenticated()
                 )
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .oauth2ResourceServer((oauth2) -> oauth2.jwt((jwt) -> jwt.decoder(jwtDecoder())))
                 .userDetailsService(userDetailsService)
+                .authenticationManager(authManager())
                 //.httpBasic(Customizer.withDefaults())
                 .build();
     }

@@ -3,10 +3,12 @@ package pat.mat.chat.app;
 
 import jakarta.persistence.*;
 
+import java.time.LocalDateTime;
 import java.util.Date;
 
 @Entity
-@Table(name = "messages")
+@Table(name = "messages", indexes = {
+        @Index(name = "idx_timestamp", columnList = "timestamp DESC")})
 public class Message {
 
     @Id
@@ -23,16 +25,15 @@ public class Message {
     private Session session;
 
 
-    @Temporal(TemporalType.TIMESTAMP)
     @Column(name = "timestamp")
-    private Date timeStamp;
+    private LocalDateTime timestamp;
 
 
     @Column(name = "content", nullable = false, columnDefinition = "TEXT")
     private String content;
 
     public Message() {
-        timeStamp = new Date();
+        timestamp = LocalDateTime.now();
     }
 
     public Message(User sender, Session session, String content) {
@@ -66,12 +67,12 @@ public class Message {
         this.session = session;
     }
 
-    public Date getTimeStamp() {
-        return timeStamp;
+    public LocalDateTime getTimeStamp() {
+        return timestamp;
     }
 
-    public void setTimeStamp(Date timeStamp) {
-        this.timeStamp = timeStamp;
+    public void setTimeStamp(LocalDateTime timeStamp) {
+        this.timestamp = timeStamp;
     }
 
     public String getContent() {

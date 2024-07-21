@@ -6,6 +6,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.oauth2.jwt.*;
 import org.springframework.stereotype.Service;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
@@ -43,27 +46,30 @@ public class JwtService {
     public TokenPair generateTokenPair(User user) {
         String successionId = generateSuccessionId();
         String refreshTokenString = generateRefreshToken(user.getUsername(), successionId);
-        System.out.println(successionId);
-        PersistentToken refreshToken = new PersistentToken(successionId, refreshTokenString, user);
+
+        PersistentToken refreshToken = new PersistentToken(successionId, hashToken(refreshTokenString), user);
         persistentTokenRepository.save(refreshToken);
 
-        return new TokenPair(generateAccessToken(user.getUsername()), refreshToken.getToken());
+        return new TokenPair(generateAccessToken(user.getUsername()), refreshTokenString);
     }
 
     public TokenPair rotateAndRefreshTokens(String refreshToken) {
+        System.out.println("here");
         Jwt jwt = jwtDecoder.decode(refreshToken);
         String successionId = jwt.getClaimAsString("successionId");
         String subjectName = jwt.getSubject();
 
         PersistentToken persistentToken = persistentTokenRepository.findById(successionId).orElseThrow(PotentialCookieTheftException::new);
 
-        if (!persistentToken.getToken().equals(refreshToken)) {
+        if (!persistentToken.getTokenHash().equals(hashToken(refreshToken))) {
             throw new PotentialCookieTheftException();
         }
-        persistentToken.setToken(generateRefreshToken(subjectName, successionId));
+
+        String newRefreshToken = generateRefreshToken(subjectName, successionId);
+        persistentToken.setTokenHash(hashToken(newRefreshToken));
         persistentTokenRepository.save(persistentToken);
 
-        return new TokenPair(generateAccessToken(subjectName), persistentToken.getToken());
+        return new TokenPair(generateAccessToken(subjectName), newRefreshToken);
     }
 
     private String generateSuccessionId() {
@@ -104,4 +110,13 @@ public class JwtService {
         return jwtEncoder.encode(JwtEncoderParameters.from(claims)).getTokenValue();
     }
 
+    public static String hashToken(String token) {
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            byte[] hash = digest.digest(token.getBytes(StandardCharsets.UTF_8));
+            return Base64.getEncoder().encodeToString(hash);
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException("Error hashing token", e);
+        }
+    }
 }
