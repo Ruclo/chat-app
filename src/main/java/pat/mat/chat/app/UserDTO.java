@@ -10,7 +10,6 @@ public class UserDTO {
     @Size(min=3, max=16)
     private String username;
 
-    @Column(nullable = false)
     @NotBlank
     @Size(min = 5)
     private String password;

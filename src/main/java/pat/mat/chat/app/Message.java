@@ -3,6 +3,7 @@ package pat.mat.chat.app;
 
 import jakarta.persistence.*;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.Date;
 
@@ -26,14 +27,14 @@ public class Message {
 
 
     @Column(name = "timestamp")
-    private LocalDateTime timestamp;
+    private Instant timestamp;
 
 
     @Column(name = "content", nullable = false, columnDefinition = "TEXT")
     private String content;
 
     public Message() {
-        timestamp = LocalDateTime.now();
+        timestamp = Instant.now();
     }
 
     public Message(User sender, Session session, String content) {
@@ -67,11 +68,11 @@ public class Message {
         this.session = session;
     }
 
-    public LocalDateTime getTimeStamp() {
+    public Instant getTimeStamp() {
         return timestamp;
     }
 
-    public void setTimeStamp(LocalDateTime timeStamp) {
+    public void setTimeStamp(Instant timeStamp) {
         this.timestamp = timeStamp;
     }
 

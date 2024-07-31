@@ -10,7 +10,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
@@ -20,9 +20,6 @@ public class MessageController {
 
     @Autowired
     MessageService messageService;
-
-    @Autowired
-    SessionService sessionService;
 
     @Autowired
     SessionRepository sessionRepository;
@@ -35,7 +32,7 @@ public class MessageController {
     public List<Message> messages(
             @PathVariable long sessionId,
             @RequestParam(name = "olderThan")
-            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Optional<LocalDateTime> timeStamp,
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Optional<Instant> timeStamp,
 
             @RequestParam(defaultValue = "10") int amount) {
 

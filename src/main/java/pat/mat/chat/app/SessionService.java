@@ -4,6 +4,8 @@ import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 public class SessionService {
 
@@ -50,5 +52,7 @@ public class SessionService {
         }
     }
 
-
+    public List<Session> getUsersSessions(String username) {
+        return sessionRepository.findAllByUsersUsername(username);
+    }
 }

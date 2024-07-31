@@ -4,6 +4,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -29,7 +30,7 @@ public class MessageService {
         return messageRepository.findLastMessagesBySessionId(sessionId, PageRequest.of(0, amount));
     }
 
-    public List<Message> getMessagesBeforeTimestampForSession(Long sessionId, LocalDateTime timestamp, int amount) {
+    public List<Message> getMessagesBeforeTimestampForSession(Long sessionId, Instant timestamp, int amount) {
         return messageRepository.findLastMessagesBeforeTimestampBySessionId(sessionId, timestamp, PageRequest.of(0, amount));
     }
 }

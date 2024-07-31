@@ -4,7 +4,9 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseCookie;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -13,9 +15,11 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.time.Duration;
 
 
 @RestController
+@RequestMapping("/auth")
 public class AuthController {
 
     @Autowired
@@ -31,7 +35,7 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    public AuthResponse register(@ModelAttribute @Valid UserDTO userDto, HttpServletResponse httpServletResponse) {
+    public void register(@RequestBody @Valid UserDTO userDto, HttpServletResponse httpServletResponse) {
 
 
         TokenPair tokenPair;
@@ -44,18 +48,11 @@ public class AuthController {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
-        Cookie persistentTokenCookie = new Cookie("refreshToken", tokenPair.refreshToken());
-        persistentTokenCookie.setHttpOnly(true);
-        persistentTokenCookie.setSecure(true);
-        persistentTokenCookie.setMaxAge(JwtService.REFRESH_TOKEN_DURATION_IN_SECONDS);
-        httpServletResponse.addCookie(persistentTokenCookie);
-
-
-        return new AuthResponse(tokenPair.accessToken());
+        addAuthCookiesToResponse(httpServletResponse, tokenPair);
     }
 
     @PostMapping("/login")
-    public AuthResponse login(@ModelAttribute @Valid UserDTO userDto, HttpServletResponse httpServletResponse) {
+    public void login(@RequestBody @Valid UserDTO userDto, HttpServletResponse httpServletResponse) {
 
         Authentication authentication;
         
@@ -73,35 +70,23 @@ public class AuthController {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
-        Cookie persistentTokenCookie = new Cookie("refreshToken", tokenPair.refreshToken());
-        persistentTokenCookie.setHttpOnly(true);
-        persistentTokenCookie.setSecure(true);
-        persistentTokenCookie.setMaxAge(JwtService.REFRESH_TOKEN_DURATION_IN_SECONDS);
-        httpServletResponse.addCookie(persistentTokenCookie);
-
-
-        return new AuthResponse(tokenPair.accessToken());    }
+        addAuthCookiesToResponse(httpServletResponse, tokenPair);
+    }
 
     @GetMapping("/refresh")
-    public AuthResponse refresh(@CookieValue("refreshToken") String refreshToken, HttpServletResponse httpServletResponse) {
+    public void refresh(@CookieValue("refresh_token") String refreshToken, HttpServletResponse httpServletResponse) {
         TokenPair tokenPair;
-        System.out.println(refreshToken);
+
         try {tokenPair = authService.refreshTokens(refreshToken);}
         catch (PotentialCookieTheftException pcte) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Cookie theft detected");
         }
 
-        Cookie persistentTokenCookie = new Cookie("refreshToken", tokenPair.refreshToken());
-        persistentTokenCookie.setHttpOnly(true);
-        persistentTokenCookie.setSecure(true);
-        persistentTokenCookie.setMaxAge(JwtService.REFRESH_TOKEN_DURATION_IN_SECONDS);
-        httpServletResponse.addCookie(persistentTokenCookie);
-
-        return new AuthResponse(tokenPair.accessToken());
+        addAuthCookiesToResponse(httpServletResponse, tokenPair);
     }
 
     @PostMapping("/logout")
-    public void logout(@CookieValue("refreshToken") String refreshToken, HttpServletResponse httpServletResponse) {
+    public void logout(@CookieValue("refresh_token") String refreshToken, HttpServletResponse httpServletResponse) {
 
         try {authService.logOut(refreshToken);}
         catch (Exception e) {
@@ -109,12 +94,43 @@ public class AuthController {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
         }
 
-        Cookie persistentTokenCookie = new Cookie("refreshToken", null);
-        persistentTokenCookie.setHttpOnly(true);
-        persistentTokenCookie.setSecure(true);
-        persistentTokenCookie.setMaxAge(0);
-        httpServletResponse.addCookie(persistentTokenCookie);
+        destroyAuthCookies(httpServletResponse);
+    }
 
+    private void addAuthCookiesToResponse(HttpServletResponse httpServletResponse, TokenPair tokenPair) {
+        _addCookiesToResponse(httpServletResponse, tokenPair,
+                Duration.ofDays(JwtService.REFRESH_TOKEN_DURATION_IN_DAYS),
+                Duration.ofMinutes(JwtService.ACCESS_TOKEN_DURATION_IN_MINUTES));
+
+    }
+
+    private void destroyAuthCookies(HttpServletResponse httpServletResponse) {
+        TokenPair tokenPair = new TokenPair("", "");
+        _addCookiesToResponse(httpServletResponse, tokenPair, Duration.ofSeconds(0), Duration.ofSeconds(0));
+    }
+
+    private void _addCookiesToResponse(HttpServletResponse httpServletResponse, TokenPair tokenPair, Duration refreshMaxAge, Duration accessMaxAge) {
+        ResponseCookie refreshTokenCookie = ResponseCookie.from("refresh_token", tokenPair.refreshToken())
+                .httpOnly(true)
+                .secure(true)
+                .maxAge(refreshMaxAge)
+                .sameSite("None")
+                .domain("127.0.0.1")
+                .path("/auth")
+                .build();
+
+        httpServletResponse.addHeader(HttpHeaders.SET_COOKIE, refreshTokenCookie.toString());
+
+        ResponseCookie accessTokenCookie = ResponseCookie.from("access_token", tokenPair.accessToken())
+                .httpOnly(true)
+                .secure(true)
+                .sameSite("None")
+                .domain("127.0.0.1")
+                .path("/")
+                .maxAge(accessMaxAge)
+                .build();
+
+        httpServletResponse.addHeader(HttpHeaders.SET_COOKIE, accessTokenCookie.toString());
     }
 
 }

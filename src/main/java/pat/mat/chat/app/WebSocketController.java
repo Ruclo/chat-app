@@ -1,15 +1,17 @@
 package pat.mat.chat.app;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.messaging.handler.annotation.DestinationVariable;
-import org.springframework.messaging.handler.annotation.MessageMapping;
-import org.springframework.messaging.handler.annotation.Payload;
+import org.springframework.messaging.handler.annotation.*;
 import org.springframework.messaging.simp.SimpMessageHeaderAccessor;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
+import org.springframework.messaging.simp.stomp.StompConversionException;
+import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
+import org.springframework.messaging.support.MessageBuilder;
+import org.springframework.messaging.Message;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
+import java.security.Principal;
+import java.util.HashMap;
 
 @Controller
 public class WebSocketController {
@@ -20,15 +22,24 @@ public class WebSocketController {
     @Autowired
     private MessageService messageService;
 
-    @MessageMapping("/chat/{sessionId}")
-    @PreAuthorize("@sessionService.isUserInSession(authentication.getName(), #sessionId)")
-    public void handleMessage(@DestinationVariable Long sessionId,
-                              @Payload String message,
-                              SimpMessageHeaderAccessor headerAccessor,
-                              Authentication authentication) {
+    @Autowired
+    private SessionService sessionService;
 
-        messageService.saveMessage(message, authentication.getName(), sessionId);
+    @MessageMapping("/session/{sessionId}")
+    @SendTo("/exchange/" + RabbitMQConfig.EXCHANGE_NAME + "/{sessionId}")
+    public Message<?> handleMessage(@DestinationVariable Long sessionId,
+                                         @AuthenticationPrincipal Principal principal,
+                                         @Payload String message) {
 
-        messagingTemplate.convertAndSend("/pub/chat/" + sessionId, message);
+        if (!sessionService.isUserInSession(principal.getName(), sessionId)) {
+            throw new StompConversionException("invalid session");
+        }
+        pat.mat.chat.app.Message messageEntity = messageService.saveMessage(message, principal.getName(), sessionId);
+
+        return MessageBuilder.withPayload(message)
+                .setHeader("sender", principal.getName())
+                .setHeader("servertime", messageEntity.getTimeStamp().toString())
+                .setHeader("groupId", sessionId)
+                .build();
     }
 }

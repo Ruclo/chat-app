@@ -6,7 +6,9 @@ import com.nimbusds.jose.jwk.RSAKey;
 import com.nimbusds.jose.jwk.source.ImmutableJWKSet;
 import com.nimbusds.jose.jwk.source.JWKSource;
 import com.nimbusds.jose.proc.SecurityContext;
+import jakarta.servlet.http.Cookie;
 import org.springframework.http.HttpMethod;
+import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.security.config.Customizer;
 
 import org.springframework.context.annotation.Bean;
@@ -25,15 +27,20 @@ import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
-import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationProvider;
+import org.springframework.security.oauth2.server.resource.web.BearerTokenResolver;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import org.springframework.web.util.WebUtils;
 
 
 import java.util.Arrays;
 
 @Configuration
 @EnableWebSecurity
+@EnableScheduling
 @EnableMethodSecurity(prePostEnabled = true)
 public class SecurityConfig {
 
@@ -55,7 +62,13 @@ public class SecurityConfig {
         ));
     }
 
-
+    @Bean
+    BearerTokenResolver bearerTokenResolver() {
+        return request -> {
+            Cookie cookie = WebUtils.getCookie(request, "access_token");
+            return cookie == null ? null : cookie.getValue();
+        };
+    }
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -63,11 +76,11 @@ public class SecurityConfig {
         return http
                 .csrf(AbstractHttpConfigurer::disable)
                 //.cors(AbstractHttpConfigurer::disable)
+                .cors(Customizer.withDefaults())
                 .authorizeHttpRequests(auth ->
-                    auth.requestMatchers(HttpMethod.POST, "/register").permitAll()
-                            .requestMatchers(HttpMethod.POST, "/login").permitAll()
-                            .requestMatchers("/refresh").permitAll()
+                    auth.requestMatchers(HttpMethod.POST, "/auth/**").permitAll()
                             .requestMatchers("/error").permitAll()
+                            //.requestMatchers("/ws/**").permitAll()
                             .anyRequest().authenticated()
                 )
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
@@ -76,6 +89,20 @@ public class SecurityConfig {
                 .authenticationManager(authManager())
                 //.httpBasic(Customizer.withDefaults())
                 .build();
+    }
+
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration configuration = new CorsConfiguration();
+        //configuration.setAllowedOrigins(Arrays.asList("*"));  // or specific origins
+        configuration.setAllowedOriginPatterns(Arrays.asList("*"));
+        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
+        configuration.setAllowedHeaders(Arrays.asList("*"));
+        configuration.setExposedHeaders(Arrays.asList("Access-Control-Allow-Origin"));
+        configuration.setAllowCredentials(true);
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", configuration);
+        return source;
     }
 
     @Bean
