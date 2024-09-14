@@ -1,14 +1,12 @@
 package pat.mat.chat.app;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
-
-import java.util.Date;
-import java.util.HashSet;
-import java.util.Set;
+import pat.mat.chat.app.repository.MessageRepository;
+import pat.mat.chat.app.repository.SessionRepository;
+import pat.mat.chat.app.repository.UserRepository;
 
 @ConfigurationPropertiesScan
 @SpringBootApplication
