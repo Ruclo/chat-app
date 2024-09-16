@@ -31,8 +31,8 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     @Override
     public void configureMessageBroker(MessageBrokerRegistry config) {
         config.enableStompBrokerRelay("/queue", "/exchange")
-                .setRelayHost("localhost")
-                .setRelayPort(61613)
+                .setRelayHost(System.getenv("BROKER_HOST"))
+                .setRelayPort(Integer.parseInt(System.getenv("BROKER_PORT")))
                 .setClientLogin("guest")
                 .setClientPasscode("guest");
         config.setApplicationDestinationPrefixes("/send");
