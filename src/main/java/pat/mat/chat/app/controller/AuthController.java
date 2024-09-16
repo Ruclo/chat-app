@@ -27,7 +27,7 @@ import java.time.Duration;
 
 
 @RestController
-@RequestMapping("/auth")
+@RequestMapping("/api/auth")
 public class AuthController {
 
     @Autowired
@@ -140,7 +140,7 @@ public class AuthController {
                 .httpOnly(true)
                 .secure(true)
                 .maxAge(refreshMaxAge)
-                .sameSite("None")
+                .sameSite("Strict")
                 .path("/auth")
                 .build();
 
@@ -149,7 +149,7 @@ public class AuthController {
         ResponseCookie accessTokenCookie = ResponseCookie.from("access_token", tokenPair.accessToken())
                 .httpOnly(true)
                 .secure(true)
-                .sameSite("None")
+                .sameSite("Strict")
                 .path("/")
                 .maxAge(accessMaxAge)
                 .build();

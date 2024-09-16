@@ -20,7 +20,7 @@ import java.time.Instant;
 import java.util.List;
 
 @RestController
-@RequestMapping("/sessions")
+@RequestMapping("/api/sessions")
 public class SessionController {
 
     @Autowired

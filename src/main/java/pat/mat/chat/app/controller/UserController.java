@@ -14,7 +14,7 @@ import pat.mat.chat.app.service.UserService;
 import java.io.IOException;
 
 @RestController
-@RequestMapping("api/users/")
+@RequestMapping("/api/users")
 public class UserController {
 
     @Autowired
