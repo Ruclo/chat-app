@@ -141,7 +141,7 @@ public class AuthController {
                 .secure(true)
                 .maxAge(refreshMaxAge)
                 .sameSite("Strict")
-                .path("/auth")
+                .path("/api/auth")
                 .build();
 
         httpServletResponse.addHeader(HttpHeaders.SET_COOKIE, refreshTokenCookie.toString());
@@ -150,7 +150,7 @@ public class AuthController {
                 .httpOnly(true)
                 .secure(true)
                 .sameSite("Strict")
-                .path("/")
+                .path("/api")
                 .maxAge(accessMaxAge)
                 .build();
 
