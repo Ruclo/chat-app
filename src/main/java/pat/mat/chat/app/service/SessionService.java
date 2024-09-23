@@ -67,17 +67,14 @@ public class SessionService {
             sessionRepository.save(session);
         }
 
-
     }
 
     public List<Session> getUsersSessions(String username) {
         return sessionRepository.findAllByUsersUsername(username);
     }
 
-    public List<SessionDTO> getUsersSessionsOrdered(String username, Instant timestamp, int count) {
-        List<Object[]> result = sessionRepository.findByUserSortedByNewestMessage(username,
-                timestamp,
-                count);
+    public List<SessionDTO> getUsersSessionsOrdered(String username) {
+        List<Object[]> result = sessionRepository.findByUserSortedByNewestMessage(username);
 
         return result.stream()
                 .map(res -> new SessionDTO(

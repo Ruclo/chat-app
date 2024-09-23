@@ -30,9 +30,8 @@ public class SessionController {
     UserService userService;
 
     @GetMapping
-    public List<SessionDTO> getSessions(@AuthenticationPrincipal Jwt jwt,
-                                        @RequestParam(required = false) Instant timestamp, @RequestParam(defaultValue = "10") int count) {
-        return sessionService.getUsersSessionsOrdered(jwt.getSubject(), timestamp, count);
+    public List<SessionDTO> getSessions(@AuthenticationPrincipal Jwt jwt) {
+        return sessionService.getUsersSessionsOrdered(jwt.getSubject());
     }
 
     @PreAuthorize("@sessionService.isUserInSession(authentication.getName(), #sessionId)")

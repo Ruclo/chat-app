@@ -37,13 +37,17 @@ public class MessageService {
     public List<MessageDTO> getLatestMessagesForSession(Long sessionId, int amount) {
         return messageRepository.findLastMessagesBySessionId(sessionId,
                 PageRequest.of(0, amount)).stream().map(MessageDTO::new)
-                .collect(Collectors.toList()).reversed();
+                .collect(Collectors.toList());
     }
 
     public List<MessageDTO> getMessagesBeforeTimestampForSession(Long sessionId, Instant timestamp, int amount) {
         return messageRepository.findLastMessagesBeforeTimestampBySessionId(sessionId,
                         timestamp,
                         PageRequest.of(0, amount)).stream().map(MessageDTO::new)
-                .collect(Collectors.toList()).reversed();
+                .collect(Collectors.toList());
+    }
+
+    public List<MessageDTO> getAllMessagesAfterTimestampForSession(Long sessionId, Instant timestamp) {
+        return messageRepository.findAllMessagesNewerThanTimestampBySessionId(sessionId, timestamp).stream().map(MessageDTO::new).collect(Collectors.toList());
     }
 }

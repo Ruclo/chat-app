@@ -25,14 +25,10 @@ public interface SessionRepository extends JpaRepository<Session, Long> {
             "WHERE session_id = cg.session_id " +
             "ORDER BY timestamp DESC " +
             "LIMIT 1) m ON true " +
-            "WHERE COALESCE(m.timestamp, cg.date_created) < COALESCE(:timestamp, CURRENT_TIMESTAMP) " +
-            "ORDER BY COALESCE(m.timestamp, cg.date_created) DESC, cg.session_id " +
-            "LIMIT :limit",
+            "ORDER BY COALESCE(m.timestamp, cg.date_created) DESC, cg.session_id ",
             countQuery = "SELECT COUNT(*) FROM sessionusers WHERE user_name = :userName",
             nativeQuery = true)
 
     List<Object[]> findByUserSortedByNewestMessage(
-            @Param("userName") String userName,
-            @Param("timestamp") Instant timestamp,
-            @Param("limit") int limit);
+            @Param("userName") String userName);
 }
