@@ -7,7 +7,7 @@ import java.time.Instant;
 
 @Entity
 @Table(name = "messages", indexes = {
-        @Index(name = "idx_sessionid_timestamp", columnList = "session_id, timestamp ASC")})
+        @Index(name = "idx_sessionid_timestamp", columnList = "session_id, timestamp ASC, timestamp DESC")})
 public class Message {
 
     @Id
