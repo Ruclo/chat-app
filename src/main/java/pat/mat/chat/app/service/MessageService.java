@@ -35,9 +35,12 @@ public class MessageService {
     }
 
     public List<MessageDTO> getLatestMessagesForSession(Long sessionId, int amount) {
-        return messageRepository.findLastMessagesBySessionId(sessionId,
+        List <MessageDTO> l;
+        l = messageRepository.findLastMessagesBySessionId(sessionId,
                 PageRequest.of(0, amount)).stream().map(MessageDTO::new)
                 .collect(Collectors.toList()).reversed();
+        System.out.println("got these sessions:" + l.toString());
+        return l;
     }
 
     public List<MessageDTO> getMessagesBeforeTimestampForSession(Long sessionId, Instant timestamp, int amount) {
