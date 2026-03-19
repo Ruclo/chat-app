@@ -39,7 +39,7 @@ public class MessageInterceptor implements ChannelInterceptor {
         }
 
         if (StompCommand.SUBSCRIBE.equals(accessor.getCommand())) {
-            if (!destination.equals("/queue/" + accessor.getUser().getName())) {
+            if (accessor.getUser() == null || !destination.equals("/queue/" + accessor.getUser().getName())) {
                 throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
             }
             accessor.setNativeHeader("durable", "true");

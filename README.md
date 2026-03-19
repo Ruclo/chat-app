@@ -1,16 +1,49 @@
-# chat-app
-Spring boot application, REST API for vue spa with websocket support.
+# chat-app (Backend)
 
-Message flow:
+Spring Boot REST + WebSocket backend for the Vue SPA. It handles authentication, sessions, and message delivery via RabbitMQ STOMP relay.
 
-Client's browser ->(via Websocket(stomp)) -> Spring boot backend -> db write -> rabbitmq stomp broker -> backend (stomp)-> browsers
+See also:
+- Frontend: `github.com/Ruclo/chat-vue`
 
-JWT based Authentication, refresh and access tokens stored in httponly secure samesite cookie, inspired by: https://web.archive.org/web/20180819014446/http://jaspan.com/improved_persistent_login_cookie_best_practice
+**Architecture**
+1. Client sends chat message over WebSocket (STOMP).
+2. Backend persists to Postgres.
+3. Backend publishes to RabbitMQ exchange.
+4. RabbitMQ routes to per-user queues.
+5. Backend relays to connected clients.
 
-Every time a refresh token is generated, its hash gets stored in a db with a succession id and expiration date.
-When user renews access token, refresh token gets rotated as well, hash gets updated, id stays the same.
-When a user tries to authenticate with a token with a succession id already present in DB and the hash doesnt match, the user gets logged out of all devices due to suspected theft.  
+**Message Flow**
+`Browser (STOMP) -> Backend -> Postgres -> RabbitMQ -> Backend (STOMP) -> Browsers`
 
-Websocket connection gets disconnected if access token doesnt get renewed.
+## Auth Design
+JWT-based auth with refresh + access tokens stored as HttpOnly cookies:
+- `access_token`: short-lived, used for API and WebSocket auth.
+- `refresh_token`: long-lived, used to rotate access tokens.
 
-Runs in docker alongside rabbitmq broker
+**Rotation + Theft Detection**
+- Each refresh token has a `successionId`.
+- The refresh token hash is stored in DB.
+- On refresh, the token rotates and the hash updates.
+- If the same `successionId` is used with a different hash, all sessions are invalidated (suspected theft).
+
+**WebSockets**
+- WebSocket connections are tied to the access token.
+- If the access token expires and isn’t refreshed, the socket is disconnected.
+
+## Config
+Environment variables (see `.env.example`):
+- `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_PASSWORD`
+- `BROKER_HOST`, `BROKER_PORT`, `BROKER_USER`, `BROKER_PASSWORD`
+- `FRONTEND_URL`
+- `RSA_PRIVATE_KEY`, `RSA_PUBLIC_KEY`
+- `CLOUDINARY_URL`
+
+`RSA_PRIVATE_KEY` and `RSA_PUBLIC_KEY` are **file paths** when using Docker Compose secrets:
+```
+RSA_PRIVATE_KEY=file:/run/secrets/rsa_private_key
+RSA_PUBLIC_KEY=file:/run/secrets/rsa_public_key
+```
+
+## Notes
+- For production, use TLS. Cookies are `Secure` and won’t be sent over plain HTTP.
+- `FRONTEND_URL` should match the public origin of the proxy (e.g., `https://chat.example.com`).

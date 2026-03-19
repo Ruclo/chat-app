@@ -33,8 +33,10 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
         config.enableStompBrokerRelay("/queue", "/exchange")
                 .setRelayHost(System.getenv("BROKER_HOST"))
                 .setRelayPort(Integer.parseInt(System.getenv("BROKER_PORT")))
-                .setClientLogin("guest")
-                .setClientPasscode("guest");
+                .setClientLogin(System.getenv("BROKER_USER"))
+                .setClientPasscode(System.getenv("BROKER_PASSWORD"))
+                .setSystemLogin(System.getenv("BROKER_USER"))
+                .setSystemPasscode(System.getenv("BROKER_PASSWORD"));
         config.setApplicationDestinationPrefixes("/send");
     }
 

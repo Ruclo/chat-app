@@ -18,6 +18,9 @@ public class MessageController {
     @Autowired
     MessageService messageService;
 
+    private static final int DEFAULT_AMOUNT = 10;
+    private static final int MAX_AMOUNT = 100;
+
     @GetMapping("/session/{sessionId}")
     @PreAuthorize("@sessionService.isUserInSession(authentication.getName(), #sessionId)")
     public List<MessageDTO> messages(
@@ -29,18 +32,19 @@ public class MessageController {
             @RequestParam(name = "newerThan")
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Optional<Instant> newerThanTimeStamp,
 
-            @RequestParam(defaultValue = "10") int amount) {
+            @RequestParam(defaultValue = "" + DEFAULT_AMOUNT) int amount) {
 
+        int safeAmount = Math.min(Math.max(amount, 1), MAX_AMOUNT);
 
         if (olderThanTimeStamp.isPresent()) {
-            return messageService.getMessagesBeforeTimestampForSession(sessionId, olderThanTimeStamp.get(), amount);
+            return messageService.getMessagesBeforeTimestampForSession(sessionId, olderThanTimeStamp.get(), safeAmount);
         }
 
         if (newerThanTimeStamp.isPresent()) {
             return messageService.getAllMessagesAfterTimestampForSession(sessionId, newerThanTimeStamp.get());
         }
 
-        return messageService.getLatestMessagesForSession(sessionId, amount);
+        return messageService.getLatestMessagesForSession(sessionId, safeAmount);
     }
 
 }
