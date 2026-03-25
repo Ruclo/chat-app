@@ -1,5 +1,5 @@
 # chat-app (Backend)
-
+https://chattington.duckdns.org/
 Spring Boot REST + WebSocket backend for the Vue SPA. It handles authentication, sessions, and message delivery via RabbitMQ STOMP relay.
 
 See also:
